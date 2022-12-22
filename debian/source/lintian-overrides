@@ -1,0 +1,4 @@
+# Data
+source-is-missing lib/cookie.js line length is 1188 characters (>512)
+source-contains-prebuilt-javascript-object lib/cookie.js line length is 1188 characters (>512)
+very-long-line-length-in-source-file lib/cookie.js line length is 1188 characters (>512)

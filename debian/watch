@@ -1,0 +1,12 @@
+version=4
+opts=\
+repacksuffix=+dfsg,\
+repack,compression=xz,\
+dversionmangle=auto,\
+filenamemangle=s/.*\/v?([\d\.-]+)\.tar\.gz/node-tough-cookie-$1.tar.gz/ \
+ https://github.com/salesforce/tough-cookie/tags .*/archive/v?([\d\.]+).tar.gz
+
+# It is not recommended use npmregistry. Please investigate more.
+# Take a look at https://wiki.debian.org/debian/watch/
+opts="searchmode=plain,component=typestough-cookie,pgpmode=none" \
+ https://registry.npmjs.org/@types/tough-cookie https://registry.npmjs.org/@types/tough-cookie/-/tough-cookie-([\d\.]+)@ARCHIVE_EXT@ ignore
