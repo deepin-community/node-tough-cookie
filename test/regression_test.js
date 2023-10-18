@@ -36,6 +36,7 @@ const async = require("async");
 const tough = require("../lib/cookie");
 const Cookie = tough.Cookie;
 const CookieJar = tough.CookieJar;
+const MemoryCookieStore = tough.MemoryCookieStore;
 
 const atNow = Date.now();
 
@@ -185,6 +186,98 @@ vows
       },
       works: function(cookies) {
         assert.lengthOf(cookies, 1);
+      }
+    }
+  })
+  .addBatch(
+    {
+      "setCookie with localhost (GH-215)": {
+        topic: function() {
+          const cookieJar = new CookieJar();
+          return cookieJar.setCookieSync(
+            "a=b; Domain=localhost",
+            "http://localhost"
+          ); // Users are free to use localhost names as they would any other domain names. [RFC 6761, Sec. 6.3.1]
+        },
+        works: function(err, c) {
+          assert.instanceOf(c, Cookie);
+          assert.match(c, /Domain=localhost/);
+        }
+      }
+    },
+    {
+      "setCookie with localhost (localhost. domain) (GH-215)": {
+        topic: function() {
+          const cookieJar = new CookieJar();
+          return cookieJar.setCookieSync(
+            "a=b; Domain=localhost.",
+            "http://localhost."
+          ); // Users are free to use localhost names as they would any other domain names. [RFC 6761, Sec. 6.3.1]
+        },
+        works: function(err, c) {
+          assert.instanceOf(c, Cookie);
+          assert.match(c, /Domain=localhost/);
+        }
+      }
+    },
+    {
+      "setCookie with localhost (GH-215) (null domain)": {
+        topic: function() {
+          const cookieJar = new CookieJar();
+          return cookieJar.setCookieSync("a=b; Domain=", "http://localhost");
+        },
+        works: function(c) {
+          assert.instanceOf(c, Cookie);
+        }
+      }
+    },
+    {
+      "setCookie with localhost (localhost.local domain) (GH-215)": {
+        topic: function() {
+          const cookieJar = new CookieJar();
+          return cookieJar.setCookieSync(
+            "a=b; Domain=localhost.local",
+            "http://localhost"
+          );
+        },
+        works: function(c) {
+          assert.instanceOf(c, Cookie);
+        }
+      }
+    },
+    {
+      "setCookie with localhost (.localhost domain), (GH-215)": {
+        topic: function() {
+          const cookieJar = new CookieJar();
+          return cookieJar.setCookieSync(
+            "a=b; Domain=.localhost",
+            "http://localhost"
+          );
+        },
+        works: function(c) {
+          assert.instanceOf(c, Cookie);
+        }
+      }
+    }
+  )
+  .addBatch({
+    MemoryCookieStore: {
+      topic: new MemoryCookieStore(),
+      "has no static methods": function() {
+        assert.deepEqual(Object.keys(MemoryCookieStore), []);
+      },
+      "has instance methods that return promises": function(store) {
+        assert.instanceOf(store.findCookie("example.com", "/", "key"), Promise);
+        assert.instanceOf(store.findCookies("example.com", "/"), Promise);
+        assert.instanceOf(store.putCookie({}), Promise);
+        assert.instanceOf(store.updateCookie({}, {}), Promise);
+        assert.instanceOf(
+          store.removeCookie("example.com", "/", "key"),
+          Promise
+        );
+        assert.instanceOf(store.removeCookies("example.com", "/"), Promise);
+        assert.instanceOf(store.removeAllCookies(), Promise);
+        assert.instanceOf(store.getAllCookies(), Promise);
       }
     }
   })
