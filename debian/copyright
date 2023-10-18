@@ -16,7 +16,7 @@ License: Expat
 
 Files: debian/*
 Copyright: 2017 Pirate Praveen <praveen@debian.org>
- 2019, Xavier Guimard <yadd@debian.org>
+ 2019-2023, Yadd <yadd@debian.org>
 License: BSD-3-Clause
 
 Files: debian/tests/test_modules/string.prototype.repeat/*

@@ -193,6 +193,94 @@ vows
         assert.match(err.message, /HttpOnly/i);
         assert.ok(!c);
       }
+    },
+    "Setting a basic IPv6 cookie": {
+      topic: function() {
+        const cj = new CookieJar();
+        const c = Cookie.parse("a=b; Domain=[::1]; Path=/");
+        assert.strictEqual(c.hostOnly, null);
+        assert.instanceOf(c.creation, Date);
+        assert.strictEqual(c.lastAccessed, null);
+        c.creation = new Date(Date.now() - 10000);
+        cj.setCookie(c, "http://[::1]/", this.callback);
+      },
+      works: function(c) {
+        assert.instanceOf(c, Cookie);
+      }, // C is for Cookie, good enough for me
+      "gets timestamped": function(c) {
+        assert.ok(c.creation);
+        assert.ok(Date.now() - c.creation.getTime() < 5000); // recently stamped
+        assert.ok(c.lastAccessed);
+        assert.equal(c.creation, c.lastAccessed);
+        assert.equal(c.TTL(), Infinity);
+        assert.ok(!c.isPersistent());
+      }
+    },
+    "Setting a prefix IPv6 cookie": {
+      topic: function() {
+        const cj = new CookieJar();
+        const c = Cookie.parse("a=b; Domain=[::ffff:127.0.0.1]; Path=/");
+        assert.strictEqual(c.hostOnly, null);
+        assert.instanceOf(c.creation, Date);
+        assert.strictEqual(c.lastAccessed, null);
+        c.creation = new Date(Date.now() - 10000);
+        cj.setCookie(c, "http://[::ffff:127.0.0.1]/", this.callback);
+      },
+      works: function(c) {
+        assert.instanceOf(c, Cookie);
+      }, // C is for Cookie, good enough for me
+      "gets timestamped": function(c) {
+        assert.ok(c.creation);
+        assert.ok(Date.now() - c.creation.getTime() < 5000); // recently stamped
+        assert.ok(c.lastAccessed);
+        assert.equal(c.creation, c.lastAccessed);
+        assert.equal(c.TTL(), Infinity);
+        assert.ok(!c.isPersistent());
+      }
+    },
+    "Setting a classic IPv6 cookie": {
+      topic: function() {
+        const cj = new CookieJar();
+        const c = Cookie.parse("a=b; Domain=[2001:4860:4860::8888]; Path=/");
+        assert.strictEqual(c.hostOnly, null);
+        assert.instanceOf(c.creation, Date);
+        assert.strictEqual(c.lastAccessed, null);
+        c.creation = new Date(Date.now() - 10000);
+        cj.setCookie(c, "http://[2001:4860:4860::8888]/", this.callback);
+      },
+      works: function(c) {
+        assert.instanceOf(c, Cookie);
+      }, // C is for Cookie, good enough for me
+      "gets timestamped": function(c) {
+        assert.ok(c.creation);
+        assert.ok(Date.now() - c.creation.getTime() < 5000); // recently stamped
+        assert.ok(c.lastAccessed);
+        assert.equal(c.creation, c.lastAccessed);
+        assert.equal(c.TTL(), Infinity);
+        assert.ok(!c.isPersistent());
+      }
+    },
+    "Setting a short IPv6 cookie": {
+      topic: function() {
+        const cj = new CookieJar();
+        const c = Cookie.parse("a=b; Domain=[2600::]; Path=/");
+        assert.strictEqual(c.hostOnly, null);
+        assert.instanceOf(c.creation, Date);
+        assert.strictEqual(c.lastAccessed, null);
+        c.creation = new Date(Date.now() - 10000);
+        cj.setCookie(c, "http://[2600::]/", this.callback);
+      },
+      works: function(c) {
+        assert.instanceOf(c, Cookie);
+      }, // C is for Cookie, good enough for me
+      "gets timestamped": function(c) {
+        assert.ok(c.creation);
+        assert.ok(Date.now() - c.creation.getTime() < 5000); // recently stamped
+        assert.ok(c.lastAccessed);
+        assert.equal(c.creation, c.lastAccessed);
+        assert.equal(c.TTL(), Infinity);
+        assert.ok(!c.isPersistent());
+      }
     }
   })
   .addBatch({
@@ -543,6 +631,19 @@ vows
         assert.strictEqual(cookies[0].key, "");
         assert.strictEqual(cookies[0].value, "FooBar");
       }
+    },
+    "Loose Mode Cloned": {
+      topic: function() {
+        const cj = new CookieJar(null, { looseMode: true });
+        return CookieJar.fromJSON(cj.toJSON());
+      },
+      "parses loose cookies from serialized cookie jar": function(cj) {
+        cj.setCookieSync("FooBar", "http://www.foonet.net", {});
+        const cookies = cj.getCookiesSync("http://www.foonet.net");
+        assert.strictEqual(cookies.length, 1);
+        assert.strictEqual(cookies[0].key, "");
+        assert.strictEqual(cookies[0].value, "FooBar");
+      }
     }
   })
   .addBatch({
@@ -649,22 +750,86 @@ vows
       "of undefined": {
         topic: function() {
           const jar = new tough.CookieJar();
-          const cookieString = `AWSELB=69b2c0038b16e8e27056d1178e0d556c; 
-          Path=/, jses_WS41=5f8dc2f6-ea37-49de-8dfa-b58336c2d9ce; path=/; 
+          const cookieString = `AWSELB=69b2c0038b16e8e27056d1178e0d556c;
+          Path=/, jses_WS41=5f8dc2f6-ea37-49de-8dfa-b58336c2d9ce; path=/;
           Secure; HttpOnly, AuthToken=EFKFFFCH@K@GHIHEJCJMMGJM>CDHDEK>CFGK?MHJ
           >>JI@B??@CAEHBJH@H@A@GCFDLIMLJEEJEIFGALA?BIM?@G@DEDI@JE?I?HKJBIDDHJMEFEFM
-          >G@J?I??B@C>>LAH?GCGJ@FMEGHBGAF; expires=Sun, 31-Jan-9021 02:39:04 GMT; 
-          path=/; Secure; HttpOnly, FirstReferrer=; expires=Fri, 31-Jan-9020 20:50:44 
+          >G@J?I??B@C>>LAH?GCGJ@FMEGHBGAF; expires=Sun, 31-Jan-9021 02:39:04 GMT;
+          path=/; Secure; HttpOnly, FirstReferrer=; expires=Fri, 31-Jan-9020 20:50:44
           GMT; path=/`;
 
           jar.setCookieSync(cookieString, "https://google.com");
-          jar.getCookies("https://google.com", this.callback)
+          jar.getCookies("https://google.com", this.callback);
         },
-        "results in a 1-length array with a valid cookie": function(err, cookies) {
+        "results in a 1-length array with a valid cookie": function(
+          err,
+          cookies
+        ) {
           assert(!err, err);
           assert(cookies.length == 1);
           assert.instanceOf(cookies[0], Cookie);
           assert.isTrue(cookies[0].secure);
+        }
+      }
+    }
+  })
+  .addBatch({
+    "Issue #145 - Missing parameter validation on setCookie function causes TypeError": {
+      "with missing parameters": {
+        topic: function() {
+          const jar = new tough.CookieJar();
+          jar.setCookie(
+            new String("x=y; Domain=example.com; Path=/"),
+            this.callback
+          );
+        },
+        "results in a error being returned because of missing parameters": function(
+          err,
+          cookies
+        ) {
+          assert(err != null);
+          assert(err instanceof tough.ParameterError);
+        }
+      }
+    }
+  })
+  .addBatch({
+    "Issue #197 - CookieJar().setCookie crashes when empty cookie is passed": {
+      "with missing parameters": {
+        topic: function() {
+          const jar = new tough.CookieJar();
+          jar.setCookie("", "https://google.com", this.callback);
+        },
+        "results in a error being returned because of missing parameters": function(
+          err,
+          cookies
+        ) {
+          assert(cookies == undefined);
+        }
+      }
+    }
+  })
+  .addBatch({
+    "Issue #282 - Prototype pollution": {
+      "when setting a cookie with the domain __proto__": {
+        topic: function() {
+          const jar = new tough.CookieJar(undefined, {
+            rejectPublicSuffixes: false
+          });
+          // try to pollute the prototype
+          jar.setCookieSync(
+            "Slonser=polluted; Domain=__proto__; Path=/notauth",
+            "https://__proto__/admin"
+          );
+          jar.setCookieSync(
+            "Auth=Lol; Domain=google.com; Path=/notauth",
+            "https://google.com/"
+          );
+          this.callback();
+        },
+        "results in a cookie that is not affected by the attempted prototype pollution": function() {
+          const pollutedObject = {};
+          assert(pollutedObject["/notauth"] === undefined);
         }
       }
     }

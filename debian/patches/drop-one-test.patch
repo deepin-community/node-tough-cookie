@@ -1,0 +1,20 @@
+Description: drop one test incompatible with Debian CI machines
+Author: Yadd <yadd@debian.org>
+Forwarded: not-needed
+Last-Update: 2023-07-08
+
+--- a/test/node_util_fallback_test.js
++++ b/test/node_util_fallback_test.js
+@@ -83,12 +83,6 @@
+         assert.equal(inspect("util.inspect"), "fallback");
+       }
+     },
+-    "util usage in Cookie": {
+-      "custom inspect for Cookie still works": function() {
+-        const cookie = Cookie.parse("a=1; Domain=example.com; Path=/");
+-        assert.equal(cookie.inspect(), util.inspect(cookie));
+-      }
+-    },
+     "util usage in MemoryCookie": {
+       "when store is empty": {
+         topic: function() {
